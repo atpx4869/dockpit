@@ -24,7 +24,7 @@ type ContainerStats struct {
 	NetTx        string  `json:"netTx"`
 	BlockRead    string  `json:"blockRead"`
 	BlockWrite   string  `json:"blockWrite"`
-	PIDs         int     `json:"pids"`
+	PIDs uint64     `json:"pids"`
 }
 
 // GetContainerStats 获取单个容器的资源统计

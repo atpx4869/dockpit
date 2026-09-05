@@ -7,6 +7,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/atpx4869/dockpit/internal/svc"
 )
@@ -45,7 +46,7 @@ func GetDiskUsage(ctx *svc.ServiceContext) (*DiskUsageInfo, error) {
 	var volSize uint64
 	for _, v := range du.Volumes {
 		if v.UsageData != nil {
-			volSize += v.UsageData.Size
+			volSize += uint64(v.UsageData.Size)
 		}
 	}
 
@@ -108,7 +109,7 @@ func PruneSystem(ctx *svc.ServiceContext) (string, error) {
 	}
 
 	// 清理构建缓存
-	buildCachePrune, err := ctx.DockerClient.BuildCachePrune(context.Background(), &types.BuildCachePruneOptions{All: true})
+	buildCachePrune, err := ctx.DockerClient.BuildCachePrune(context.Background(), types.BuildCachePruneOptions{All: true})
 	if err == nil {
 		output += fmt.Sprintf("构建缓存清理: 释放 %s\n", formatBytes(buildCachePrune.SpaceReclaimed))
 	}
@@ -183,7 +184,7 @@ func ListVolumes(ctx *svc.ServiceContext) ([]VolumeInfo, error) {
 			Labels:     v.Labels,
 		}
 		if v.UsageData != nil {
-			info.Size = formatBytes(v.UsageData.Size)
+			info.Size = formatBytes(uint64(v.UsageData.Size))
 		}
 		result = append(result, info)
 	}
