@@ -53,7 +53,7 @@ func GetDiskUsage(ctx *svc.ServiceContext) (*DiskUsageInfo, error) {
 	var buildCacheSize uint64
 	for _, bc := range du.BuildCache {
 		if !bc.InUse {
-			buildCacheSize += bc.Size
+			buildCacheSize += uint64(bc.Size)
 		}
 	}
 
