@@ -1,4 +1,4 @@
-module github.com/onlyLTY/dockerCopilot
+module github.com/atpx4869/dockpit
 
 go 1.23.0
 

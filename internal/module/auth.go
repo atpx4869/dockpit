@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	ref "github.com/distribution/reference"
-	"github.com/onlyLTY/dockerCopilot/internal/types"
+	"github.com/atpx4869/dockpit/internal/types"
 	"github.com/zeromicro/go-zero/core/logx"
 	"io"
 	"net/http"

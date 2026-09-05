@@ -2,39 +2,45 @@ package container
 
 import (
 	"context"
-	"github.com/atpx4869/dockpit/internal/utiles"
 
 	"github.com/atpx4869/dockpit/internal/svc"
 	"github.com/atpx4869/dockpit/internal/types"
+	"github.com/atpx4869/dockpit/internal/utiles"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-type RenameLogic struct {
+type LogsLogic struct {
 	logx.Logger
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 }
 
-func NewRenameLogic(ctx context.Context, svcCtx *svc.ServiceContext) *RenameLogic {
-	return &RenameLogic{
+func NewLogsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *LogsLogic {
+	return &LogsLogic{
 		Logger: logx.WithContext(ctx),
 		ctx:    ctx,
 		svcCtx: svcCtx,
 	}
 }
 
-func (l *RenameLogic) Rename(req *types.ContainerRenameReq) (resp *types.Resp, err error) {
+func (l *LogsLogic) GetLogs(req *types.ContainerLogsReq) (resp *types.Resp, err error) {
 	resp = &types.Resp{}
-	err = utiles.RenameContainer(l.svcCtx, req.Id, req.NewName)
+	tail := req.Tail
+	if tail <= 0 {
+		tail = 100
+	}
+
+	logResult, err := utiles.GetContainerLogs(l.svcCtx, req.Id, tail)
 	if err != nil {
 		resp.Code = 400
 		resp.Msg = err.Error()
 		resp.Data = map[string]interface{}{}
 		return resp, err
 	}
+
 	resp.Code = 200
 	resp.Msg = "success"
-	resp.Data = map[string]interface{}{}
+	resp.Data = logResult
 	return resp, nil
 }

@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/onlyLTY/dockerCopilot/internal/config"
+	"github.com/atpx4869/dockpit/internal/config"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 

@@ -6,13 +6,13 @@ package handler
 import (
 	"net/http"
 
-	auth "github.com/onlyLTY/dockerCopilot/internal/handler/auth"
-	container "github.com/onlyLTY/dockerCopilot/internal/handler/container"
-	icons "github.com/onlyLTY/dockerCopilot/internal/handler/icons"
-	image "github.com/onlyLTY/dockerCopilot/internal/handler/image"
-	progress "github.com/onlyLTY/dockerCopilot/internal/handler/progress"
-	version "github.com/onlyLTY/dockerCopilot/internal/handler/version"
-	"github.com/onlyLTY/dockerCopilot/internal/svc"
+	auth "github.com/atpx4869/dockpit/internal/handler/auth"
+	container "github.com/atpx4869/dockpit/internal/handler/container"
+	icons "github.com/atpx4869/dockpit/internal/handler/icons"
+	image "github.com/atpx4869/dockpit/internal/handler/image"
+	progress "github.com/atpx4869/dockpit/internal/handler/progress"
+	version "github.com/atpx4869/dockpit/internal/handler/version"
+	"github.com/atpx4869/dockpit/internal/svc"
 
 	"github.com/zeromicro/go-zero/rest"
 )
@@ -66,6 +66,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/container/:id/update",
 				Handler: container.UpdateHandler(serverCtx),
 			},
+			// ★ 容器日志
+						{
+				Method:  http.MethodGet,
+				Path:    "/container/:id/logs",
+				Handler: container.LogsHandler(serverCtx),
+			},
 			{
 				Method:  http.MethodGet,
 				Path:    "/container/backup",
@@ -95,6 +101,17 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Method:  http.MethodGet,
 				Path:    "/containers",
 				Handler: container.ContainersListHandler(serverCtx),
+			},
+						// ★ Compose 管理
+			{
+				Method:  http.MethodGet,
+				Path:    "/compose/list",
+				Handler: container.ComposeListHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/compose/update",
+				Handler: container.ComposeUpdateHandler(serverCtx),
 			},
 		},
 		rest.WithJwt(serverCtx.Config.Auth.AccessSecret),

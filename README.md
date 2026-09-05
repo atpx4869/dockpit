@@ -1,30 +1,26 @@
-# dockerCopilot
-<a href="https://www.gnu.org/licenses/agpl-3.0.en.html">
-    <img alt="License: AGPLv3" src="https://shields.io/badge/License-AGPL%20v3-blue.svg">
-  </a>
+# DockPit
 
-# 介绍
+基于 [dockerCopilot](https://github.com/onlyLTY/dockercopilot) 二改的 Docker 容器管理工具。
 
-一个主打便捷的docker容器管理工具，现在已经支持所有平台。
-已经实现：
-1. 一键更新容器
-2. 指定镜像和tag更新
-3. 启动、停止、重启容器
-4. 重命名容器
-5. 删除无TAG镜像
-6. 删除未使用镜像
-7. 更新进度查看
-8. 备份容器设置
-9. 恢复容器设置
+## 新增功能（相比原版）
 
-## 使用
+| 功能 | 原版 | DockPit |
+|------|------|---------|
+| 容器列表 | ✅ | ✅ |
+| 启停重启 | ✅ | ✅ |
+| 单容器更新 | ✅ | ✅ |
+| **容器日志** | ❌ | ✅ 新增 |
+| **Compose 项目发现** | ❌ | ✅ 新增 |
+| **Compose 一键更新** | ❌ | ✅ 新增 |
 
-docker compose 安装
+## 部署
 
-```
+### Docker Compose（推荐）
+
+```yaml
 services:
-  dockercopilot:
-    container_name: dockercopilot
+  dockpit:
+    container_name: dockpit
     restart: always
     privileged: true
     network_mode: bridge
@@ -36,11 +32,32 @@ services:
     environment:
       - TZ=Asia/Shanghai
       - DOCKER_HOST=unix:///var/run/docker.sock
-      - secretKey=密码，不少于八位且非纯数字
-    image: 0nlylty/dockercopilot:latest
+      - secretKey=your_password_min_8_chars
+    image: ghcr.io/atpx4869/dockpit:latest
 ```
 
-## 开发环境
+## API 新增接口
 
-go版本：1.21+
+### 容器日志
+```
+GET /api/container/:id/logs?tail=100
+```
 
+### Compose 项目列表
+```
+GET /api/compose/list
+```
+
+### Compose 一键更新
+```
+POST /api/compose/update
+Body: {"name": "project_name", "working_dir": "/path/to/project"}
+```
+
+## 自动构建
+
+推送代码到 `latest` 分支或打 `v*` tag 时，GitHub Actions 自动构建 `linux/amd64` + `linux/arm64` 双架构镜像并推送到 `ghcr.io`。
+
+## License
+
+AGPL-3.0（继承原项目）

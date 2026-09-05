@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/onlyLTY/dockerCopilot/internal/svc"
-	"github.com/onlyLTY/dockerCopilot/internal/types"
+	"github.com/atpx4869/dockpit/internal/svc"
+	"github.com/atpx4869/dockpit/internal/types"
 )
 
 func TestRestoreRejectsTraversalFilename(t *testing.T) {

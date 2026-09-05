@@ -2,9 +2,9 @@ package version
 
 import (
 	"context"
-	"github.com/onlyLTY/dockerCopilot/internal/svc"
-	"github.com/onlyLTY/dockerCopilot/internal/types"
-	"github.com/onlyLTY/dockerCopilot/internal/utiles"
+	"github.com/atpx4869/dockpit/internal/svc"
+	"github.com/atpx4869/dockpit/internal/types"
+	"github.com/atpx4869/dockpit/internal/utiles"
 	"github.com/zeromicro/go-zero/core/logx"
 	"os"
 	"time"

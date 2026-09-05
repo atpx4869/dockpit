@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/onlyLTY/dockerCopilot/internal/svc"
-	"github.com/onlyLTY/dockerCopilot/internal/types"
+	"github.com/atpx4869/dockpit/internal/svc"
+	"github.com/atpx4869/dockpit/internal/types"
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 

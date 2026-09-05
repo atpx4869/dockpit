@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/onlyLTY/dockerCopilot/internal/svc"
+	"github.com/atpx4869/dockpit/internal/svc"
 )
 
 func TestUploadHandlerRejectsNonImageFiles(t *testing.T) {

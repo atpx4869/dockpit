@@ -5,20 +5,13 @@ import (
 
 	"github.com/atpx4869/dockpit/internal/logic/container"
 	"github.com/atpx4869/dockpit/internal/svc"
-	"github.com/atpx4869/dockpit/internal/types"
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
-func StartHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+func ComposeListHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.IdReq
-		if err := httpx.Parse(r, &req); err != nil {
-			httpx.ErrorCtx(r.Context(), w, err)
-			return
-		}
-
-		l := container.NewStartLogic(r.Context(), svcCtx)
-		resp, err := l.Start(&req)
+		l := container.NewComposeListLogic(r.Context(), svcCtx)
+		resp, err := l.ComposeList()
 		if err != nil {
 			httpx.WriteJson(w, resp.Code, resp)
 		} else {

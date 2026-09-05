@@ -93,3 +93,30 @@ type VersionReq struct {
 type GetNewImageReq struct {
 	ImageNameAndTag string `json:"image_name_and_tag"`
 }
+
+// --- 容器日志 ---
+
+type ContainerLogsReq struct {
+	IdReq
+	Tail int `form:"tail,default=100"`
+}
+
+type ContainerLogsResp struct {
+	Content   string `json:"content"`
+	Timestamp string `json:"timestamp"`
+}
+
+// --- Compose 管理 ---
+
+type ComposeUpdateReq struct {
+	Name       string `json:"name"`
+	WorkingDir string `json:"working_dir"`
+	ConfigFile string `json:"config_file,optional"`
+}
+
+type ComposeProjectInfo struct {
+	Name       string   `json:"name"`
+	WorkingDir string   `json:"workingDir"`
+	ConfigFile string   `json:"configFile"`
+	Containers []string `json:"containers"`
+}
