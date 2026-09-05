@@ -11,6 +11,7 @@ import (
 	icons "github.com/atpx4869/dockpit/internal/handler/icons"
 	image "github.com/atpx4869/dockpit/internal/handler/image"
 	progress "github.com/atpx4869/dockpit/internal/handler/progress"
+	system "github.com/atpx4869/dockpit/internal/handler/system"
 	version "github.com/atpx4869/dockpit/internal/handler/version"
 	"github.com/atpx4869/dockpit/internal/svc"
 
@@ -41,6 +42,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 
 	server.AddRoutes(
 		[]rest.Route{
+			// --- 原有功能 ---
 			{
 				Method:  http.MethodPost,
 				Path:    "/container/:id/rename",
@@ -65,12 +67,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Method:  http.MethodPost,
 				Path:    "/container/:id/update",
 				Handler: container.UpdateHandler(serverCtx),
-			},
-			// ★ 容器日志
-						{
-				Method:  http.MethodGet,
-				Path:    "/container/:id/logs",
-				Handler: container.LogsHandler(serverCtx),
 			},
 			{
 				Method:  http.MethodGet,
@@ -102,7 +98,42 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/containers",
 				Handler: container.ContainersListHandler(serverCtx),
 			},
-						// ★ Compose 管理
+			// --- 新增功能 ---
+			{
+				Method:  http.MethodGet,
+				Path:    "/container/:id/logs",
+				Handler: container.LogsHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/container/:id/stats",
+				Handler: container.StatsHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/containers/stats",
+				Handler: container.StatsAllHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/container/:id/exec",
+				Handler: container.ExecHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/containers/batch",
+				Handler: container.BatchHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/container/:id/health",
+				Handler: container.HealthHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/containers/health",
+				Handler: container.HealthAllHandler(serverCtx),
+			},
 			{
 				Method:  http.MethodGet,
 				Path:    "/compose/list",
@@ -112,6 +143,49 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Method:  http.MethodPost,
 				Path:    "/compose/update",
 				Handler: container.ComposeUpdateHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/compose/logs",
+				Handler: container.ComposeLogsHandler(serverCtx),
+			},
+		},
+		rest.WithJwt(serverCtx.Config.Auth.AccessSecret),
+		rest.WithPrefix("/api"),
+	)
+
+	// --- 系统管理 ---
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				Method:  http.MethodGet,
+				Path:    "/system/disk",
+				Handler: system.DiskUsageHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/system/disk/cleanup",
+				Handler: system.DiskCleanupHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/system/networks",
+				Handler: system.NetworkListHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodDelete,
+				Path:    "/system/network/:id",
+				Handler: system.NetworkRemoveHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/system/volumes",
+				Handler: system.VolumeListHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodDelete,
+				Path:    "/system/volume/:id",
+				Handler: system.VolumeRemoveHandler(serverCtx),
 			},
 		},
 		rest.WithJwt(serverCtx.Config.Auth.AccessSecret),

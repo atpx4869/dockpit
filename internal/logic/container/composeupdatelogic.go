@@ -19,11 +19,7 @@ type ComposeUpdateLogic struct {
 }
 
 func NewComposeUpdateLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ComposeUpdateLogic {
-	return &ComposeUpdateLogic{
-		Logger: logx.WithContext(ctx),
-		ctx:    ctx,
-		svcCtx: svcCtx,
-	}
+	return &ComposeUpdateLogic{Logger: logx.WithContext(ctx), ctx: ctx, svcCtx: svcCtx}
 }
 
 func (l *ComposeUpdateLogic) ComposeUpdate(req *types.ComposeUpdateReq) (resp *types.Resp, err error) {
@@ -35,56 +31,35 @@ func (l *ComposeUpdateLogic) ComposeUpdate(req *types.ComposeUpdateReq) (resp *t
 			if r := recover(); r != nil {
 				l.Errorf("Compose 更新 panic: %v", r)
 				l.svcCtx.UpdateProgress(taskID, svc.TaskProgress{
-					TaskID:     taskID,
-					Percentage: 100,
-					Name:       req.Name,
-					Message:    "更新失败",
-					DetailMsg:  fmt.Sprintf("panic: %v", r),
-					IsDone:     true,
+					TaskID: taskID, Percentage: 100, Name: req.Name,
+					Message: "更新失败", DetailMsg: fmt.Sprintf("panic: %v", r), IsDone: true,
 				})
 			}
 		}()
 
 		l.svcCtx.UpdateProgress(taskID, svc.TaskProgress{
-			TaskID:     taskID,
-			Percentage: 0,
-			Name:       req.Name,
-			Message:    "正在开始 Compose 更新",
-			DetailMsg:  "正在开始...",
-			IsDone:     false,
+			TaskID: taskID, Percentage: 10, Name: req.Name,
+			Message: "正在执行 compose 更新（失败自动回滚）", DetailMsg: "正在拉取镜像...", IsDone: false,
 		})
 
-		l.svcCtx.UpdateProgress(taskID, svc.TaskProgress{
-			TaskID:     taskID,
-			Percentage: 10,
-			Name:       req.Name,
-			Message:    "正在执行 docker compose pull + up",
-			DetailMsg:  "正在拉取镜像并重建容器...",
-			IsDone:     false,
-		})
-
-		output, updateErr := utiles.ComposeUpdate(l.svcCtx, req.WorkingDir, req.ConfigFile, req.Name)
+		output, updateErr := utiles.ComposeUpdateWithRollback(l.svcCtx, req.WorkingDir, req.ConfigFile, req.Name)
 
 		if updateErr != nil {
 			l.Errorf("Compose 更新失败: %v", updateErr)
 			l.svcCtx.UpdateProgress(taskID, svc.TaskProgress{
-				TaskID:     taskID,
-				Percentage: 100,
-				Name:       req.Name,
-				Message:    "更新失败",
-				DetailMsg:  output,
-				IsDone:     true,
+				TaskID: taskID, Percentage: 100, Name: req.Name,
+				Message: "更新失败", DetailMsg: output, IsDone: true,
 			})
+			// 发送告警
+			if l.svcCtx.Config.AlertWebhook != "" {
+				_ = utiles.SendWebhookAlert(l.svcCtx.Config.AlertWebhook, utiles.UpdateFailedAlert(req.Name, output))
+			}
 			return
 		}
 
 		l.svcCtx.UpdateProgress(taskID, svc.TaskProgress{
-			TaskID:     taskID,
-			Percentage: 100,
-			Name:       req.Name,
-			Message:    "Compose 更新成功",
-			DetailMsg:  output,
-			IsDone:     true,
+			TaskID: taskID, Percentage: 100, Name: req.Name,
+			Message: "Compose 更新成功", DetailMsg: output, IsDone: true,
 		})
 	}()
 

@@ -1,0 +1,39 @@
+package container
+
+import (
+	"net/http"
+
+	"github.com/atpx4869/dockpit/internal/logic/container"
+	"github.com/atpx4869/dockpit/internal/svc"
+	"github.com/atpx4869/dockpit/internal/types"
+	"github.com/zeromicro/go-zero/rest/httpx"
+)
+
+func HealthHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req types.IdReq
+		if err := httpx.Parse(r, &req); err != nil {
+			httpx.ErrorCtx(r.Context(), w, err)
+			return
+		}
+		l := container.NewHealthLogic(r.Context(), svcCtx)
+		resp, err := l.GetHealth(&req)
+		if err != nil {
+			httpx.WriteJson(w, resp.Code, resp)
+		} else {
+			httpx.OkJsonCtx(r.Context(), w, resp)
+		}
+	}
+}
+
+func HealthAllHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		l := container.NewHealthLogic(r.Context(), svcCtx)
+		resp, err := l.GetAllHealth()
+		if err != nil {
+			httpx.WriteJson(w, resp.Code, resp)
+		} else {
+			httpx.OkJsonCtx(r.Context(), w, resp)
+		}
+	}
+}

@@ -9,9 +9,8 @@ import (
 )
 
 func GetContainerList(ctx *svc.ServiceContext) ([]MyType.Container, error) {
-	// 获取所有容器（包括停止的容器）
 	dockerContainerList, err := ctx.DockerClient.ContainerList(context.Background(), container.ListOptions{
-		All: true, // 设置为true来获取所有容器
+		All: true,
 	})
 	if err != nil {
 		logx.Errorf("get container list error: %v", err)
@@ -36,4 +35,85 @@ func CheckImageUpdate(ctx *svc.ServiceContext, containerListData []MyType.Contai
 		}
 	}
 	return containerListData
+}
+
+// ContainerHealthInfo 容器健康检查信息
+type ContainerHealthInfo struct {
+	ContainerID   string `json:"containerId"`
+	ContainerName string `json:"containerName"`
+	HealthStatus  string `json:"healthStatus"` // healthy / unhealthy / starting / none
+	HealthLog     string `json:"healthLog"`
+}
+
+// GetContainerHealth 获取容器健康检查状态
+func GetContainerHealth(ctx *svc.ServiceContext, id string) (*ContainerHealthInfo, error) {
+	info, err := ctx.DockerClient.ContainerInspect(context.Background(), id)
+	if err != nil {
+		return nil, err
+	}
+
+	healthInfo := &ContainerHealthInfo{
+		ContainerID: id,
+	}
+
+	if len(info.Name) > 0 {
+		healthInfo.ContainerName = info.Name[1:]
+	}
+
+	if info.State.Health == nil {
+		healthInfo.HealthStatus = "none"
+		return healthInfo, nil
+	}
+
+	healthInfo.HealthStatus = info.State.Health.Status
+
+	// 获取最后一条健康检查日志
+	if len(info.State.Health.Log) > 0 {
+		lastLog := info.State.Health.Log[len(info.State.Health.Log)-1]
+		healthInfo.HealthLog = lastLog.Output
+	}
+
+	return healthInfo, nil
+}
+
+// GetAllContainerHealth 获取所有容器的健康检查状态
+func GetAllContainerHealth(ctx *svc.ServiceContext) ([]ContainerHealthInfo, error) {
+	containers, err := ctx.DockerClient.ContainerList(context.Background(), container.ListOptions{All: true})
+	if err != nil {
+		return nil, err
+	}
+
+	var results []ContainerHealthInfo
+	for _, c := range containers {
+		name := ""
+		if len(c.Names) > 0 {
+			name = c.Names[0][1:]
+		}
+		info, err := ctx.DockerClient.ContainerInspect(context.Background(), c.ID)
+		if err != nil {
+			results = append(results, ContainerHealthInfo{
+				ContainerID:   c.ID,
+				ContainerName: name,
+				HealthStatus:  "unknown",
+			})
+			continue
+		}
+
+		healthStatus := "none"
+		var healthLog string
+		if info.State.Health != nil {
+			healthStatus = info.State.Health.Status
+			if len(info.State.Health.Log) > 0 {
+				healthLog = info.State.Health.Log[len(info.State.Health.Log)-1].Output
+			}
+		}
+
+		results = append(results, ContainerHealthInfo{
+			ContainerID:   c.ID,
+			ContainerName: name,
+			HealthStatus:  healthStatus,
+			HealthLog:     healthLog,
+		})
+	}
+	return results, nil
 }

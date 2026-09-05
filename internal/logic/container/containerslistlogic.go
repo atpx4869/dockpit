@@ -2,11 +2,11 @@ package container
 
 import (
 	"context"
-	"github.com/atpx4869/dockpit/internal/utiles"
 	"time"
 
 	"github.com/atpx4869/dockpit/internal/svc"
 	"github.com/atpx4869/dockpit/internal/types"
+	"github.com/atpx4869/dockpit/internal/utiles"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -18,14 +18,20 @@ type ContainersListLogic struct {
 }
 
 type Info struct {
-	Id          string `json:"id"`
-	Status      string `json:"status"`
-	Name        string `json:"name"`
-	UsingImage  string `json:"usingImage"`
-	CreateImage string `json:"createImage"`
-	CreateTime  string `json:"createTime"`
-	RunningTime string `json:"runningTime"`
-	HaveUpdate  bool   `json:"haveUpdate"`
+	Id           string  `json:"id"`
+	Status       string  `json:"status"`
+	Name         string  `json:"name"`
+	UsingImage   string  `json:"usingImage"`
+	CreateImage  string  `json:"createImage"`
+	CreateTime   string  `json:"createTime"`
+	RunningTime  string  `json:"runningTime"`
+	HaveUpdate   bool    `json:"haveUpdate"`
+	HealthStatus string  `json:"healthStatus"`
+	IsCompose    bool    `json:"isCompose"`
+	ComposeName  string  `json:"composeName"`
+	CPUPercent   float64 `json:"cpuPercent,omitempty"`
+	MemUsage     string  `json:"memUsage,omitempty"`
+	MemPercent   float64 `json:"memPercent,omitempty"`
 }
 
 func NewContainersListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ContainersListLogic {
@@ -37,7 +43,6 @@ func NewContainersListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Co
 }
 
 func (l *ContainersListLogic) ContainersList() (resp *types.Resp, err error) {
-	// 获取所有容器（包括停止的容器）
 	resp = &types.Resp{}
 	list, err := utiles.GetContainerList(l.svcCtx)
 	if err != nil {
@@ -54,28 +59,47 @@ func (l *ContainersListLogic) ContainersList() (resp *types.Resp, err error) {
 		containerInfo.Id = v.ID
 		containerInfo.Status = v.State
 		if len(v.Names) > 0 {
-			ContainerName := v.Names[0][1:]
-			containerInfo.Name = ContainerName
+			containerInfo.Name = v.Names[0][1:]
 		} else {
-			containerInfo.Name = "get container name error"
-			l.Error("get container name error" + v.ID)
+			containerInfo.Name = "unknown"
 		}
-		if v.Image != "" {
-			containerInfo.UsingImage = v.Image
-		} else {
+		containerInfo.UsingImage = v.Image
+		if containerInfo.UsingImage == "" {
 			containerInfo.UsingImage = v.ImageID
-			l.Error("image dont have name" + v.ID)
 		}
+
 		containerInspect, err := utiles.GetContainerInspect(l.svcCtx, v.ID)
-		if err != nil {
-			containerInfo.CreateImage = ""
-			l.Error("get image name error" + v.ID)
+		if err == nil {
+			containerInfo.CreateImage = containerInspect.Config.Image
+			// 健康检查状态
+			if containerInspect.State.Health != nil {
+				containerInfo.HealthStatus = containerInspect.State.Health.Status
+			} else {
+				containerInfo.HealthStatus = "none"
+			}
+			// Compose 标签检测
+			labels := containerInspect.Config.Labels
+			if projectName, ok := labels["com.docker.compose.project"]; ok {
+				containerInfo.IsCompose = true
+				containerInfo.ComposeName = projectName
+			}
 		}
-		containerInfo.CreateImage = containerInspect.Config.Image
+
 		t := time.Unix(v.Created, 0)
 		containerInfo.CreateTime = t.Format("2006-01-02 15:04:05")
 		containerInfo.RunningTime = v.Status
 		containerInfo.HaveUpdate = v.Update
+
+		// 只对 running 容器获取资源统计
+		if v.State == "running" {
+			stats, err := utiles.GetContainerStats(l.svcCtx, v.ID)
+			if err == nil {
+				containerInfo.CPUPercent = stats.CPUPercent
+				containerInfo.MemUsage = stats.MemUsage
+				containerInfo.MemPercent = stats.MemPercent
+			}
+		}
+
 		containerInfoList = append(containerInfoList, containerInfo)
 	}
 	resp.Data = containerInfoList
