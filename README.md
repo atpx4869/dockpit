@@ -25,7 +25,7 @@ services:
     privileged: true
     network_mode: bridge
     ports:
-      - 12712:12712
+      - 12812:12812
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./data:/data

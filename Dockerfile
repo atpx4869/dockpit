@@ -41,6 +41,6 @@ ENV secretKey="" \
 
 VOLUME ["/data"]
 
-EXPOSE 12712
+EXPOSE 12812
 
 CMD ["./start.sh"]
